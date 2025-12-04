@@ -48,10 +48,11 @@ def main():
     parser.add_argument("--resize", type=float, default=1.0, help="Resize factor (<1.0 speeds up)")
     parser.add_argument("--save-path", type=str, default=None, help="Path to save latest panorama after each update")
     parser.add_argument("--no-feather", action="store_true", help="Disable feather blending")
+    parser.add_argument("--feature", type=str, choices=["ORB", "SIFT"], default="ORB", help="Feature type for matching")
 
     args = parser.parse_args()
 
-    stitcher = ProgressiveStitcher(resize=args.resize, feather=(not args.no_feather))
+    stitcher = ProgressiveStitcher(feature=args.feature, resize=args.resize, feather=(not args.no_feather))
     # Default: reset on start
     stitcher.reset()
 

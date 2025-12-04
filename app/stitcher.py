@@ -19,13 +19,24 @@ class ProgressiveStitcher:
         self.feather = feather
 
         # Feature detector/descriptor and matcher
-        if feature.upper() == "ORB":
+        feat = feature.upper()
+        if feat == "ORB":
             self.detector = cv2.ORB_create(nfeatures=n_features)
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+            self.norm = cv2.NORM_HAMMING
+        elif feat == "SIFT":
+            # Use SIFT with L2 matching (FLANN recommended for speed)
+            self.detector = cv2.SIFT_create(nfeatures=n_features)
+            # FLANN parameters for SIFT (KDTree)
+            index_params = dict(algorithm=1, trees=5)  # 1: FLANN_INDEX_KDTREE
+            search_params = dict(checks=50)
+            self.matcher = cv2.FlannBasedMatcher(index_params, search_params)
+            self.norm = cv2.NORM_L2
         else:
             # Fallback to AKAZE if requested feature is unsupported
             self.detector = cv2.AKAZE_create()
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+            self.norm = cv2.NORM_HAMMING
 
         # Panorama buffers
         self.panorama: Optional[np.ndarray] = None  # float32 [0..1]
@@ -66,6 +77,12 @@ class ProgressiveStitcher:
     def _match(self, d1, d2):
         if d1 is None or d2 is None or len(d1) == 0 or len(d2) == 0:
             return []
+        # For FLANN with SIFT, descriptors must be float32
+        if isinstance(self.matcher, cv2.FlannBasedMatcher):
+            if d1.dtype != np.float32:
+                d1 = d1.astype(np.float32)
+            if d2.dtype != np.float32:
+                d2 = d2.astype(np.float32)
         matches = self.matcher.knnMatch(d1, d2, k=2)
         good = []
         for m, n in matches:
