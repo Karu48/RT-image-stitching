@@ -35,6 +35,15 @@ class ProgressiveStitcher:
         # Keyframes store
         self.keyframes: List[Dict] = []
 
+    def reset(self) -> None:
+        """Clear panorama, masks, offsets, and keyframes.
+        Use before starting a new image sequence (e.g., new session).
+        """
+        self.panorama = None
+        self.mask = None
+        self.offset = (0.0, 0.0)
+        self.keyframes.clear()
+
     @staticmethod
     def _ensure_color(img: np.ndarray) -> np.ndarray:
         if img.ndim == 2:

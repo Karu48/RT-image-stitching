@@ -16,19 +16,14 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Run with a camera:
+Run watching a folder for new images (headless):
 ```powershell
-python -m app.main --source camera --camera-index 0 --resize 0.75
-```
-
-Run watching a folder for new images:
-```powershell
-python -m app.main --source folder --folder .\samples --poll-interval 0.5 --resize 0.75
+python -m app.main --folder .\samples --poll-interval 0.5 --resize 0.5 --save-path panorama.jpg
 ```
 
 Notes:
 - Use `--resize` (< 1.0) to speed up matching with high-res frames.
-- Press `q` in the display window to quit. Use `--no-view` to run headless and optionally save to `--save-path`.
+- Headless by default: no window is created; use `--save-path` to persist the latest panorama after each update.
 
 ## Limitations & Tips
 - Works best for planar scenes or pure rotational motion. For significant parallax, expect artifacts.
@@ -45,6 +40,25 @@ RT-image-stitching/
     stitcher.py
   requirements.txt
   README.md
+```
+
+## Runtime Behavior (Final Version)
+- Folder-only: the runner polls an input folder and stitches images as they appear.
+- Reset on start: the internal stitcher state is cleared when the process starts.
+- Folder-based reset: if the folder becomes empty after previously having images, the stitcher resets automatically.
+- Output file cleanup: when a folder-based reset occurs, the runner removes the current output file specified by `--save-path` to start clean.
+- Saving: if `--save-path` is set, the latest panorama is written after each successful update.
+
+## Example Commands
+```powershell
+# Start stitching from a folder and save the panorama
+python -m app.main --folder .\samples --poll-interval 0.5 --resize 0.5 --save-path panorama.jpg
+
+# Reset by clearing the folder contents; the stitcher resets automatically and deletes the output file
+Remove-Item .\samples\* -Force
+
+# Add new images to begin a new session
+Copy-Item .\new_session\*.jpg .\samples\
 ```
 
 ## License
